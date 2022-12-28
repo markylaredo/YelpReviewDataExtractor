@@ -1,6 +1,6 @@
 ﻿namespace YelpReviewDataExtractor.Models
 {
-    public class GoogleVisionData
+    public class GoogleVisionResponseData
     {
         public Response[] responses { get; set; }
     }
