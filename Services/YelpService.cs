@@ -48,7 +48,7 @@ namespace YelpReviewDataExtractor.Services
             await ProcessReviewerAvatarEmotions(reviews);
 
 
-            return response.Data?.Reviews ?? Enumerable.Empty<YelpReview>();
+            return reviews;
         }
 
 
