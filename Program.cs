@@ -2,6 +2,8 @@ using YelpReviewDataExtractor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<YelpSetting>(builder.Configuration.GetSection(nameof(YelpSetting)));
+
 builder.Services.AddTransient<IYelpService, YelpService>();
 builder.Services.AddControllers();
 
