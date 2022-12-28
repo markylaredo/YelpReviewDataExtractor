@@ -13,17 +13,15 @@ namespace YelpReviewDataExtractor.Controllers
         {
             _yelpService = yelpService;
         }
+       
 
 
         [HttpGet]
-        public async Task<IActionResult> Reviews([FromQuery] ReviewQueryDto query)
+        public async Task<IActionResult> Reviews()
         {
-            var reviews = await _yelpService.GetReviewsAsync(query);
+            var reviews = await _yelpService.GetReviewsAsync();
 
             return Ok(reviews);
         }
-
-
     }
-
 }
