@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using RestSharp;
+using YelpReviewDataExtractor.Models;
 
 namespace YelpReviewDataExtractor.Services
 {
@@ -9,10 +10,13 @@ namespace YelpReviewDataExtractor.Services
         private const string baseUrl = "https://api.yelp.com/v3/businesses/hog-island-oyster-san-francisco-2/reviews";
 
         private readonly IOptionsMonitor<YelpSetting> _yelpSetting;
+        private readonly IOptionsMonitor<GoogleVisionSetting> _googleVisionSetting;
 
-        public YelpService(IOptionsMonitor<YelpSetting> yelpSetting)
+        public YelpService(IOptionsMonitor<YelpSetting> yelpSetting,
+            IOptionsMonitor<GoogleVisionSetting> googleVisionSetting)
         {
             _yelpSetting = yelpSetting;
+            _googleVisionSetting = googleVisionSetting;
         }
 
         /// <summary>
@@ -38,39 +42,71 @@ namespace YelpReviewDataExtractor.Services
 
             var response = await client.ExecuteAsync<YelpData>(request);
 
+            var reviews = response.Data?.Reviews ?? Enumerable.Empty<YelpReview>();
+
+            await ProcessReviewerAvatarEmotions(reviews);
+
+
             return response.Data?.Reviews ?? Enumerable.Empty<YelpReview>();
+        }
+
+
+        private async Task ProcessReviewerAvatarEmotions(IEnumerable<YelpReview> reviews)
+        {
+            // Process the review data further by running the reviewer avatar images through the Google Vision API
+            foreach (var review in reviews)
+            {
+
+                var client = new RestClient();
+                var request = new RestRequest
+                {
+                    Resource = $"https://vision.googleapis.com/v1/images:annotate?key={_googleVisionSetting.CurrentValue.ApiKey}",
+                    Method = Method.Post,
+                };
+                request.AddHeader("accept", "application/json");
+
+                var features = new[] {
+                    new GoogleVisionFeature {
+                        maxResults = 10,
+                        type = "FACE_DETECTION"
+                    }
+                };
+
+                var gVisionRequest = new GoogleVisionRequest
+                {
+                    requests = new[] {
+                        new GoogleVisionRequestBody
+                    {
+                        features = features,
+                        image = new GoogleVisionSource
+                        {
+                           Source= new GoogleVisionImageSource
+                           {
+                                imageUri = review.user.image_url
+                           }
+                        }
+                    }}
+                };
+
+
+                // Add the JsonBody object to the request
+                request.AddJsonBody(gVisionRequest);
+
+
+                var executeResponse = await client.ExecuteAsync<GoogleVisionResponseData>(request);
+
+                if (executeResponse.StatusCode != System.Net.HttpStatusCode.OK) continue;
+
+                if (executeResponse.Data is null) continue;
+
+                var response = executeResponse.Data.responses.FirstOrDefault();
+                if (response is null) continue;
+
+                review.joyLikelihood = response.faceAnnotations.FirstOrDefault()?.joyLikelihood;
+                review.sorrowLikelihood = response.faceAnnotations.FirstOrDefault()?.sorrowLikelihood;
+            }
         }
 
     }
 }
-
-
-public class YelpData
-{
-    public List<YelpReview> Reviews { get; set; } = new();
-}
-
-
-public class YelpReview
-{
-    public string id { get; set; }
-    public string text { get; set; }
-    public int rating { get; set; }
-    public YelpUser user { get; set; }
-}
-
-public class YelpUser
-{
-    public string id { get; set; }
-    public string profile_url { get; set; }
-    public string image_url { get; set; }
-    public string name { get; set; }
-}
-
-public class YelpSetting
-{
-    public string ApiKey { get; set; }
-}
-
-
 
