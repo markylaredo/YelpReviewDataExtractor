@@ -6,7 +6,7 @@ namespace YelpReviewDataExtractor.Services
     public class YelpService : IYelpService
     {
 
-        private const string baseUrl = "https://api.yelp.com/v3/businesses/hog-island-oyster-san-francisco-2/reviews?locale=en_PH&offset=20&limit=20&sort_by=yelp_sort";
+        private const string baseUrl = "https://api.yelp.com/v3/businesses/hog-island-oyster-san-francisco-2/reviews";
 
         private readonly IOptionsMonitor<YelpSetting> _yelpSetting;
 
@@ -15,7 +15,12 @@ namespace YelpReviewDataExtractor.Services
             _yelpSetting = yelpSetting;
         }
 
-        public async Task<IEnumerable<YelpReview>> GetReviewsAsync()
+        /// <summary>
+        /// Retrieves reviews from the Yelp API using the specified query parameters.
+        /// </summary>
+        /// <param name="query">The query parameters to use for filtering and sorting the reviews.</param>
+        /// <returns>A collection of <see cref="YelpReview"/> objects representing the reviews retrieved from the Yelp API.</returns>
+        public async Task<IEnumerable<YelpReview>> GetReviewsAsync(ReviewQueryDto query)
         {
             var client = new RestClient();
             var request = new RestRequest
@@ -27,10 +32,15 @@ namespace YelpReviewDataExtractor.Services
             request.AddHeader("accept", "application/json");
             request.AddHeader("Authorization", $"Bearer {_yelpSetting.CurrentValue.ApiKey}");
 
+            request.AddQueryParameter("offset", query.Offset);
+            request.AddQueryParameter("limit", query.Limit);
+            request.AddQueryParameter("sort_by", query.SortBy);
+
             var response = await client.ExecuteAsync<YelpData>(request);
 
             return response.Data?.Reviews ?? Enumerable.Empty<YelpReview>();
         }
+
     }
 }
 
@@ -61,3 +71,6 @@ public class YelpSetting
 {
     public string ApiKey { get; set; }
 }
+
+
+
