@@ -1,5 +1,8 @@
+using YelpReviewDataExtractor.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddTransient<IYelpService, YelpService>();
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
