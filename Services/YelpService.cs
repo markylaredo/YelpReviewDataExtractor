@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using RestSharp;
+using YelpReviewDataExtractor.Dtos;
 using YelpReviewDataExtractor.Models;
 
 namespace YelpReviewDataExtractor.Services

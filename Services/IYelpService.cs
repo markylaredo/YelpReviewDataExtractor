@@ -1,4 +1,6 @@
-﻿namespace YelpReviewDataExtractor.Services
+﻿using YelpReviewDataExtractor.Dtos;
+
+namespace YelpReviewDataExtractor.Services
 {
     public interface IYelpService
     {
