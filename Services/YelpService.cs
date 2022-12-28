@@ -45,16 +45,20 @@ namespace YelpReviewDataExtractor.Services
 
             var reviews = response.Data?.Reviews ?? Enumerable.Empty<YelpReview>();
 
-            await ProcessReviewerAvatarEmotions(reviews);
-
+            await ProcessReviewersAvatarEmotions(reviews);
 
             return reviews;
         }
 
-
-        private async Task ProcessReviewerAvatarEmotions(IEnumerable<YelpReview> reviews)
+        /// <summary>
+        /// Processes the reviewer avatar images of the specified reviews and retrieves the emotions data using the Google Vision API.
+        /// </summary>
+        /// <param name="reviews">The reviews whose reviewer avatar images should be processed.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        private async Task ProcessReviewersAvatarEmotions(IEnumerable<YelpReview> reviews)
         {
             // Process the review data further by running the reviewer avatar images through the Google Vision API
+
             foreach (var review in reviews)
             {
 
