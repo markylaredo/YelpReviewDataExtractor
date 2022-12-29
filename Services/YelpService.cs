@@ -61,44 +61,7 @@ namespace YelpReviewDataExtractor.Services
 
             foreach (var review in reviews)
             {
-
-                var client = new RestClient();
-                var request = new RestRequest
-                {
-                    Resource = $"https://vision.googleapis.com/v1/images:annotate?key={_googleVisionSetting.CurrentValue.ApiKey}",
-                    Method = Method.Post,
-                };
-                request.AddHeader("accept", "application/json");
-
-                var features = new[] {
-                    new GoogleVisionFeature {
-                        maxResults = 10,
-                        type = "FACE_DETECTION"
-                    }
-                };
-
-                var gVisionRequest = new GoogleVisionRequest
-                {
-                    requests = new[] {
-                        new GoogleVisionRequestBody
-                    {
-                        features = features,
-                        image = new GoogleVisionSource
-                        {
-                           Source= new GoogleVisionImageSource
-                           {
-                                imageUri = review.user.image_url
-                           }
-                        }
-                    }}
-                };
-
-
-                // Add the JsonBody object to the request
-                request.AddJsonBody(gVisionRequest);
-
-
-                var executeResponse = await client.ExecuteAsync<GoogleVisionResponseData>(request);
+                RestResponse<GoogleVisionResponseData> executeResponse = await GoogleVisionImageAnnotateRequest(review);
 
                 if (executeResponse.StatusCode != System.Net.HttpStatusCode.OK) continue;
 
@@ -112,6 +75,52 @@ namespace YelpReviewDataExtractor.Services
             }
         }
 
+        /// <summary>
+        /// Makes a request to the Google Vision API to annotate an image.
+        /// </summary>
+        /// <param name="review">The Yelp review that contains the image to be annotated.</param>
+        /// <returns>A <see cref="RestResponse{T}"/> containing the response data from the Google Vision API.</returns>
+        private async Task<RestResponse<GoogleVisionResponseData>> GoogleVisionImageAnnotateRequest(YelpReview review)
+        {
+            var client = new RestClient();
+            var request = new RestRequest
+            {
+                Resource = $"https://vision.googleapis.com/v1/images:annotate?key={_googleVisionSetting.CurrentValue.ApiKey}",
+                Method = Method.Post,
+            };
+            request.AddHeader("accept", "application/json");
+
+            var features = new[] {
+                    new GoogleVisionFeature {
+                        maxResults = 10,
+                        type = "FACE_DETECTION"
+                    }
+                };
+
+            var gVisionRequest = new GoogleVisionRequest
+            {
+                requests = new[] {
+                        new GoogleVisionRequestBody
+                    {
+                        features = features,
+                        image = new GoogleVisionSource
+                        {
+                           Source= new GoogleVisionImageSource
+                           {
+                                imageUri = review.user.image_url
+                           }
+                        }
+                    }}
+            };
+
+
+            // Add the JsonBody object to the request
+            request.AddJsonBody(gVisionRequest);
+
+
+            var executeResponse = await client.ExecuteAsync<GoogleVisionResponseData>(request);
+            return executeResponse;
+        }
     }
 }
 
